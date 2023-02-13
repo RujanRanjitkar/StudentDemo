@@ -1,36 +1,41 @@
 package com.example.demo.service;
 
 import com.example.demo.Repo.studentRepo;
+import com.example.demo.pojo.student.StudentDetailRequestPojo;
 import com.example.demo.student.student;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.Month;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 @Service
-public class demoservice {
+@RequiredArgsConstructor
+public class demoservice{
     private final studentRepo stdrepo;
+    private final ObjectMapper objectMapper;
+    private final StudentDetailRequestPojo studentDetailRequestPojo;
+//    private final StudentDetailMapper studentDetailMapper;
 
-    @Autowired
-    public demoservice(studentRepo stdrepo) {
-        this.stdrepo = stdrepo;
-    }
+
 
     public List<student> getStudent(){
         return stdrepo.findAll();
     }
 
-    public void addNewStudent(student st) {
-        Optional<student> studentOptional = stdrepo.findstudentByEmail(st.getEmail());
-        if(studentOptional.isPresent()){
-            throw new IllegalStateException("email taken");
-        }
-        stdrepo.save(st);
+    public void addNewStudent(StudentDetailRequestPojo studentDetailRequestPojo) {
+        student std;
+//        Optional<student> studentOptional = stdrepo.findstudentByEmail(st.getEmail());
+//        if(studentOptional.isPresent()){
+//            throw new IllegalStateException("email taken");
+//        }
+        if(studentDetailRequestPojo.getStudentId()!=null)
+            std=stdrepo.findById(studentDetailRequestPojo.getStudentId()).orElse(new student());
+        std=objectMapper.convertValue(studentDetailRequestPojo, student.class);
+        stdrepo.save(std);
     }
 
     public void deleteStudent(Long studentId) {
@@ -57,5 +62,16 @@ public class demoservice {
             }
             stu.setEmail(email);
         }
+    }
+
+    public Optional<student> getStudentById(Long studentId) {
+//        StudentDetailResponsePojo studentDetailResponsePojo = studentDetailMapper.getStudentById(studentId);
+//        return studentDetailResponsePojo;
+
+        boolean exists=stdrepo.existsById(studentId);
+        if(!exists){
+            throw new IllegalStateException("student with id "+ studentId +" does not exists");
+        }
+        return stdrepo.findById(studentId);
     }
 }
